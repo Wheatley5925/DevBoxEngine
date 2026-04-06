@@ -20,9 +20,10 @@ def main():
     )
 
     args = parser.parse_args()
-
+    
     project_dir = Path(args.project).resolve()
-    out_dir = Path(args.out).resolve()
+    project_name = project_dir.name
+    out_dir = Path(args.out + "/" + project_name).resolve()
     assets_src = project_dir / "assets"
     assets_out = out_dir / "assets"
     firmware_out = project_dir / "esp_build"
@@ -30,9 +31,13 @@ def main():
     out_dir.mkdir(parents=True, exist_ok=True)
     assets_out.mkdir(parents=True, exist_ok=True)
     firmware_out.mkdir(parents=True, exist_ok=True)
+    
 
+    print("\n+++ ASSET CONVERSION STARTED +++")
     sync_and_convert(assets_src, assets_out)
+    print("+++ ASSET CONVERSION STARTED +++\n")
 
+    print("\n+++ PROJECT COMPILATION STARTED +++")
     subprocess.run(
         [
             "arduino-cli",
@@ -46,13 +51,12 @@ def main():
         check=True,
     )
 
-    project_name = project_dir.name
     bin_name = f"{project_name}.ino.bin"
     src_bin = firmware_out / bin_name
-    dst_bin = out_dir / f"{project_name}.bin"
+    dst_bin = out_dir / f"app.bin"
 
     os.replace(src_bin, dst_bin)
-
+    print("+++ PROJECT BUILT SUCCESSFULLY +++\n")
 
 if __name__ == "__main__":
     main()

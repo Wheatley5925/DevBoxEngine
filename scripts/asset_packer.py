@@ -8,7 +8,7 @@ from converters.pack_bitmap import pack_bitmap
 def sync_and_convert(src_root, dst_root):
     src_root = Path(src_root)
     dst_root = Path(dst_root)
-
+    
     for path in src_root.rglob('*'):
         relative_path = path.relative_to(src_root)
         target_path = dst_root / relative_path

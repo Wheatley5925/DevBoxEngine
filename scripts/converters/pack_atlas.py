@@ -6,7 +6,7 @@ from typing import Tuple
 
 from PIL import Image
 import json
-from pack_bitmap import load_grayscale, to_4bpp_packed
+from .pack_bitmap import load_grayscale, to_4bpp_packed
 
 MAGIC_ATL = b"ATL4"
 

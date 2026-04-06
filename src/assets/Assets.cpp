@@ -1,5 +1,5 @@
 #include "Assets.h"
-
+#include <cstring>
 #include <Arduino.h>
 #include <FS.h>
 #include <SD_MMC.h>
@@ -73,87 +73,110 @@ void update() {
 
 BitmapAsset loadBitmap(const char* path) {
     BitmapAsset out;
+    if (!path || !path[0]) return out;
 
-    if (!path || !path[0]) {
+    FILE* f = fopen(path, "rb");
+    if (!f) return out;
+
+    struct SprHeader {
+        char magic[4];
+        uint16_t width;
+        uint16_t height;
+    } hdr{};
+
+    if (fread(&hdr, 1, sizeof(hdr), f) != sizeof(hdr)) {
+        fclose(f);
         return out;
     }
 
-    File f = SD_MMC.open(path, FILE_READ);
-    if (!f) {
+    if (memcmp(hdr.magic, "SPR4", 4) != 0 || hdr.width == 0 || hdr.height == 0) {
+        fclose(f);
         return out;
     }
 
-    SprHeader hdr{};
-    const int hdrRead = f.read(reinterpret_cast<uint8_t*>(&hdr), sizeof(hdr));
-    if (hdrRead != (int)sizeof(hdr) || !isValidSprHeader(hdr)) {
-        f.close();
+    const size_t dataSize = ((hdr.width + 1) >> 1) * hdr.height;
+    uint8_t* pixels = new (std::nothrow) uint8_t[dataSize];
+    if (!pixels) {
+        fclose(f);
         return out;
     }
 
-    const int bytes = calcBitmapBytes(hdr.width, hdr.height);
-    if (bytes <= 0) {
-        f.close();
+    if (fread(pixels, 1, dataSize, f) != dataSize) {
+        delete[] pixels;
+        fclose(f);
         return out;
     }
 
-    uint8_t* mem = static_cast<uint8_t*>(malloc(bytes));
-    if (!mem) {
-        f.close();
-        return out;
-    }
+    fclose(f);
 
-    const int rd = f.read(mem, bytes);
-    f.close();
-
-    if (rd != bytes) {
-        free(mem);
-        return out;
-    }
-
-    out.data = mem;
-    out.width = static_cast<int16_t>(hdr.width);
-    out.height = static_cast<int16_t>(hdr.height);
+    out.width = hdr.width;
+    out.height = hdr.height;
+    out.data = pixels;
     out.ownsMemory = true;
     return out;
 }
 
 AtlasAsset loadAtlas(const char* path) {
     AtlasAsset out;
+    if (!path || !path[0]) return out;
 
-    if (!path || !path[0]) {
+    FILE* f = fopen(path, "rb");
+    if (!f) return out;
+
+    struct AtlHeader {
+        char magic[4];
+        uint16_t width;
+        uint16_t height;
+        uint16_t frameCount;
+        uint8_t transparentColor;
+        uint8_t reserved;
+    } hdr{};
+
+    if (fread(&hdr, 1, sizeof(hdr), f) != sizeof(hdr)) {
+        fclose(f);
         return out;
     }
 
-    File f = SD_MMC.open(path, FILE_READ);
-    if (!f) {
+    if (memcmp(hdr.magic, "ATL4", 4) != 0 ||
+        hdr.width == 0 || hdr.height == 0 || hdr.frameCount == 0) {
+        fclose(f);
         return out;
     }
 
-    AtlHeader hdr{};
-    const int hdrRead = f.read(reinterpret_cast<uint8_t*>(&hdr), sizeof(hdr));
-    if (hdrRead != (int)sizeof(hdr) || !isValidAtlHeader(hdr)) {
-        f.close();
-        return out;
-    }
+    struct AtlasFrameDisk {
+        char name[16];
+        uint16_t x;
+        uint16_t y;
+        uint16_t w;
+        uint16_t h;
+        int16_t originX;
+        int16_t originY;
+    };
 
-    SpriteFrame* frames = new (std::nothrow) SpriteFrame[hdr.frameCount];
+    dbx::SpriteFrame* frames = new (std::nothrow) dbx::SpriteFrame[hdr.frameCount];
     if (!frames) {
-        f.close();
+        fclose(f);
+        return out;
+    }
+
+    char (*names)[16] = new (std::nothrow) char[hdr.frameCount][16];
+    if (!names) {
+        delete[] frames;
+        fclose(f);
         return out;
     }
 
     for (uint16_t i = 0; i < hdr.frameCount; ++i) {
         AtlasFrameDisk fr{};
-        const int rd = f.read(reinterpret_cast<uint8_t*>(&fr), sizeof(fr));
-        if (rd != (int)sizeof(fr)) {
+        if (fread(&fr, 1, sizeof(fr), f) != sizeof(fr)) {
+            delete[] names;
             delete[] frames;
-	    delete[] names;
-            f.close();
+            fclose(f);
             return out;
         }
 
-	std::memcpy(names[i], fr.name, 16);
-	names[i][15] = '\0';
+        memcpy(names[i], fr.name, 16);
+        names[i][15] = '\0';
 
         frames[i].x = fr.x;
         frames[i].y = fr.y;
@@ -163,40 +186,34 @@ AtlasAsset loadAtlas(const char* path) {
         frames[i].originY = fr.originY;
     }
 
-    const int bytes = calcBitmapBytes(hdr.width, hdr.height);
-    if (bytes <= 0) {
-        delete[] frames;
-        f.close();
-        return out;
-    }
-
-    uint8_t* pixels = static_cast<uint8_t*>(malloc(bytes));
+    const size_t dataSize = ((hdr.width + 1) >> 1) * hdr.height;
+    uint8_t* pixels = new (std::nothrow) uint8_t[dataSize];
     if (!pixels) {
+        delete[] names;
         delete[] frames;
-        f.close();
+        fclose(f);
         return out;
     }
 
-    const int rd = f.read(pixels, bytes);
-    f.close();
-
-    if (rd != bytes) {
-        free(pixels);
+    if (fread(pixels, 1, dataSize, f) != dataSize) {
+        delete[] pixels;
+        delete[] names;
         delete[] frames;
+        fclose(f);
         return out;
     }
 
+    fclose(f);
+
+    out.bitmap.width = hdr.width;
+    out.bitmap.height = hdr.height;
     out.bitmap.data = pixels;
-    out.bitmap.width = static_cast<int16_t>(hdr.width);
-    out.bitmap.height = static_cast<int16_t>(hdr.height);
     out.bitmap.ownsMemory = true;
-
     out.frames = frames;
     out.frameNames = names;
     out.frameCount = hdr.frameCount;
     out.transparentColor = hdr.transparentColor;
     out.ownsFrames = true;
-
     return out;
 }
 

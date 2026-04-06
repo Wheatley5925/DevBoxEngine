@@ -21,10 +21,10 @@ bool Engine::begin(Scene* firstScene) {
         return true;
     }
 
+    initSD();
+    initAudio();
     const bool displayOk = initDisplay();
     initButtons();
-    initAudio();
-    initSD();
 
     Input::begin();
     Audio::begin();
