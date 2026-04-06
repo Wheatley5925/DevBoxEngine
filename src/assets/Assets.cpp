@@ -27,6 +27,7 @@ struct AtlHeader {
 };
 
 struct AtlasFrameDisk {
+    char name[16];
     uint16_t x;
     uint16_t y;
     uint16_t w;
@@ -146,9 +147,13 @@ AtlasAsset loadAtlas(const char* path) {
         const int rd = f.read(reinterpret_cast<uint8_t*>(&fr), sizeof(fr));
         if (rd != (int)sizeof(fr)) {
             delete[] frames;
+	    delete[] names;
             f.close();
             return out;
         }
+
+	std::memcpy(names[i], fr.name, 16);
+	names[i][15] = '\0';
 
         frames[i].x = fr.x;
         frames[i].y = fr.y;
@@ -187,6 +192,7 @@ AtlasAsset loadAtlas(const char* path) {
     out.bitmap.ownsMemory = true;
 
     out.frames = frames;
+    out.frameNames = names;
     out.frameCount = hdr.frameCount;
     out.transparentColor = hdr.transparentColor;
     out.ownsFrames = true;
@@ -213,6 +219,7 @@ void unload(AtlasAsset& atlas) {
     }
 
     atlas.frames = nullptr;
+    atlas.frameNames = nullptr;
     atlas.frameCount = 0;
     atlas.transparentColor = 0;
     atlas.ownsFrames = false;

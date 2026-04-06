@@ -12,6 +12,7 @@ namespace dbx {
 struct AtlasAsset {
     BitmapAsset bitmap;
     SpriteFrame* frames = nullptr;
+    char (*frameNames)[16] = nullptr;
     uint16_t frameCount = 0;
     uint8_t transparentColor = 0;
     bool ownsFrames = false;

@@ -7,8 +7,10 @@ from typing import Tuple
 from PIL import Image
 
 
-MAGIC = b"SPR4"
+MAGIC_SPR = b"SPR4"
+MAGIC_ATL = b"ATL4"
 
+transparent_color = 0   #transparent color is hardcoded right now as black
 
 def quantize_8_to_4(gray8: int) -> int:
     return (gray8 * 15 + 127) // 255
@@ -42,14 +44,15 @@ def to_4bpp_packed(im_l: Image.Image) -> Tuple[bytes, int, int]:
 
 def write_spr(out_path: Path, data4: bytes, width: int, height: int) -> None:
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    header = struct.pack("<4sHH", MAGIC, width, height)
+    header = struct.pack("<4sHH", MAGIC_SPR, width, height)
 
     with out_path.open("wb") as f:
         f.write(header)
         f.write(data4)
 
-
 def pack_bitmap(src: Path, dst: Path) -> None:
     im_l = load_grayscale(src)
     data4, w, h = to_4bpp_packed(im_l)
     write_spr(dst, data4, w, h)
+
+
