@@ -22,22 +22,22 @@ def sync_and_convert(src_root, dst_root):
         if path.suffix == ".png":
 
             if path.name.endswith(".atlas.png"):
-                print(f"Converting atlas: {path} -> {target_path}")
-                out_path = target_path.with_suffix(".atl4")
+                out_path = target_path.with_name(target_path.name.replace(".atlas.png", ".atlas.atl4"))
+                print(f"Converting atlas: {path} -> {out_path}")
                 base_path = path.name.replace(".atlas.png", "")
                 json_path = path.with_name(f"{base_path}.json")    
                 pack_atlas(path, json_path, out_path)
-
-            print(f"Converting bitmap: {path} -> {target_path}")
-            out_path = target_path.with_suffix(".spr4");
-            pack_bitmap(path, out_path)
+            else:
+                out_path = Path(target_path.with_suffix(".spr4"));
+                print(f"Converting bitmap: {path} -> {out_path}")
+                pack_bitmap(path, out_path)
 
         elif path.suffix in [".wav", ".mp3", ".ogg", ".flac"]:
-            print(f"Converting audio: {path} -> {target_path}")
-            out_path = target_path.with_suffix(".wav");
-            pack_audio(path, target_path)
+            out_path = Path(target_path.with_suffix(".wav"));
+            print(f"Converting audio: {path} -> {out_path}")
+            pack_audio(path, out_path)
         
         else:
-            print(f"Copying: {path} -> {target_path}")
+            print(f"Copying: {path} -> {out_path}")
             shutil.copy2(path, target_path)
 

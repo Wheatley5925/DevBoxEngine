@@ -1,5 +1,5 @@
 #include <DevBoxEngine.h>
-#include "MainScene.h"
+#include "src/MainScene.h"
 
 dbx::Engine engine;
 MainScene mainScene;
@@ -11,14 +11,14 @@ static bool shouldReturnToOS() {
            dbx::Input::held(dbx::Button::Select);
 }
 
-void setup() {
+void setup() {    
     engine.begin(&mainScene);
 }
 
 void loop() {
-    engine.tick();
+    engine.tick(); 
 
-    const bool comboHeld = shouldReturnToOS();
+   const bool comboHeld = shouldReturnToOS();
     if (comboHeld && !wasReturnComboHeld) {
         dbx::System::requestReturnToOS();
     }

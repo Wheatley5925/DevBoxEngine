@@ -1,6 +1,7 @@
 #pragma once
 
 #include <DevBoxEngine.h>
+#include "Player.h"
 
 class MainScene : public dbx::Scene {
 public:
@@ -11,10 +12,9 @@ public:
 
 private:
     dbx::AtlasAsset m_playerAtlas;
-
-    int m_frame0 = -1;
-    int m_frame1 = -1;
-
-    float m_animTimer = 0.0f;
-    int m_currentFrame = 0;
+    dbx::AtlasAsset m_hpAtlas;
+    dbx::BitmapAsset m_stars;
+    dbx::BitmapAsset m_planet;
+    dbx::BitmapAsset m_laser;
+    Player m_player;
 };

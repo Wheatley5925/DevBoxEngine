@@ -35,7 +35,7 @@ inline bool readRawButton(int logicalIndex) {
     if (rawIndex < 0) {
         return false;
     }
-    return buttonPressed(rawIndex);
+    return !buttonRaw(rawIndex);
 }
 
 } // namespace

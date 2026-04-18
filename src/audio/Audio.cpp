@@ -39,7 +39,7 @@ constexpr UBaseType_t kQueueLen = 1;
 constexpr size_t kChunkSize = 1024;
 
 // Tune later if needed.
-constexpr uint32_t kTaskStackBytes = 4096;
+constexpr uint32_t kTaskStackBytes = 12288;
 constexpr UBaseType_t kTaskPriority = 3;
 constexpr BaseType_t kTaskCore = 0;
 
@@ -146,9 +146,17 @@ bool streamWavFileUntilInterrupted(const AudioCommand& initialCmd, AudioCommand&
                 }
             }
 
-            size_t written = 0;
-            const esp_err_t err =
-                i2s_write(I2S_NUM_0, buf + off, bytesRead - off, &written, portMAX_DELAY);
+            updateAudioVolumeFromPot();
+	    uint8_t* outPtr = buf + off;
+	    size_t outBytes = bytesRead - off;
+
+	    // apply volume only to complete 16-bit samples
+	    size_t sampleCount = outBytes / sizeof(int16_t);
+ 	    applyVolumeToBuffer(reinterpret_cast<int16_t*>(outPtr), sampleCount);
+
+	    size_t written = 0;
+	    const esp_err_t err =
+	        i2s_write(I2S_NUM_0, outPtr, outBytes, &written, portMAX_DELAY);
 
             if (err != ESP_OK || written == 0) {
                 fclose(f);

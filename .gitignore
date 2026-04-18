@@ -1,3 +1,5 @@
 build
 examples/**/build
 examples/**/esp_build
+
+scripts/__pycache__
