@@ -38,6 +38,5 @@ def sync_and_convert(src_root, dst_root):
             pack_audio(path, out_path)
         
         else:
-            print(f"Copying: {path} -> {out_path}")
+            print(f"Copying: {path} -> {target_path}")
             shutil.copy2(path, target_path)
-

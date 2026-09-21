@@ -1,6 +1,5 @@
 #include "Engine.h"
 
-#include <Arduino.h>
 #include <DevBoxSDK.h>
 
 #include "Scene.h"
@@ -15,12 +14,14 @@
 namespace dbx {
 
 static Renderer g_renderer;
+constexpr uint32_t kFrameTimeUs = 1000000 / 60;
 
 bool Engine::begin(Scene* firstScene) {
     if (m_started) {
         return true;
     }
 
+    initDebugOutput();
     initSD();
     initAudio();
     const bool displayOk = initDisplay();
@@ -34,7 +35,7 @@ bool Engine::begin(Scene* firstScene) {
 
     m_scene = firstScene;
     m_nextScene = nullptr;
-    m_lastMicros = micros();
+    m_lastMicros = devboxMicros();
     m_frameCount = 0;
     m_dt = 1.0f / 60.0f;
     m_started = true;
@@ -72,13 +73,23 @@ void Engine::tick() {
         return;
     }
 
-    const uint32_t now = micros();
-    const uint32_t deltaUs = now - m_lastMicros;
+    uint32_t now = devboxMicros();
+    uint32_t deltaUs = now - m_lastMicros;
+    if (deltaUs < kFrameTimeUs) {
+        devboxDelayMicros(kFrameTimeUs - deltaUs);
+        now = devboxMicros();
+        deltaUs = now - m_lastMicros;
+    }
     m_lastMicros = now;
 
     m_dt = deltaUs / 1000000.0f;
     if (m_dt > 0.05f) {
         m_dt = 0.05f;
+    }
+
+    if (devboxApplicationPaused()) {
+        g_renderer.present();
+        return;
     }
 
     Input::update();

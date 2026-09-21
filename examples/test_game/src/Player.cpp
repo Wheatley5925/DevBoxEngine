@@ -1,9 +1,10 @@
 #include "Player.h"
-#include "Arduino.h"
 
 using namespace dbx;
 
 static constexpr float IDLE_FRAME_TIME = 0.5f;
+static constexpr const char* LASER_SOUND_PATH =
+    "/sdcard/apps/test_game/assets/main/laserShoot.wav";
 
 void Player::clampPosition() {
     m_x = (m_x > max_x) ? max_x : m_x;
@@ -20,12 +21,15 @@ void Player::setPosition(int x, int y) {
 }
 
 void Player::setHP(int hp) {
-    Serial.begin(115200);
     m_hp = hp;
 }
 
 void Player::tryShoot() {
     if (m_laser_cnt > 0) return;
+
+    Audio::playSfx(LASER_SOUND_PATH);
+
+    frames_since_shot = 0;
 
     m_laser_cnt++;
     m_laser_pos.x = m_x + 41;
@@ -44,7 +48,7 @@ void Player::update(float dt) {
     if (Input::pressed(Button::B)) tryShoot();
 
     if (m_laser_cnt > 0) {
-	m_laser_pos.x += 4;
+	    m_laser_pos.x += 4;
     	if (m_laser_pos.x > 256) m_laser_cnt = 0;
     }
 
@@ -53,6 +57,7 @@ void Player::update(float dt) {
 
     Player::clampPosition();
 
+    frames_since_shot++;
     m_animTimer += dt;
     while (m_animTimer >= IDLE_FRAME_TIME) {
         m_animTimer -= IDLE_FRAME_TIME;
@@ -64,7 +69,7 @@ int Player::currentFrame() const {
     return (m_animFrame == 0) ? 0 : 1;
 }
 
-void Player::draw(Renderer& r, const AtlasAsset& atlasAsset, const BitmapAsset& laser) const {
+void Player::draw(Renderer& r, const AtlasAsset& atlasAsset, const BitmapAsset& laser, const BitmapAsset& shoot_fx) const {
     if (!atlasAsset.valid()) return;
 
     SpriteAtlas atlas = atlasAsset.view();
@@ -76,8 +81,13 @@ void Player::draw(Renderer& r, const AtlasAsset& atlasAsset, const BitmapAsset& 
     const int drawX = m_x - fr.originX;
     const int drawY = m_y - fr.originY;
     
-    if (m_laser_cnt > 0)
+    if (m_laser_cnt > 0) {
     	r.drawBitmap(laser.view(), m_laser_pos.x, m_laser_pos.y, false, 0);
-    
+    }
+
+    if (frames_since_shot < 5) {
+        r.drawBitmap(shoot_fx.view(), drawX + 42, drawY + 7, false, 0);
+    }
+
     r.drawSprite(atlas, frameIndex, drawX, drawY, true, atlasAsset.transparentColor);
 }

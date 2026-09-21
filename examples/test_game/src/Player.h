@@ -8,7 +8,7 @@ public:
 	void setHP(int hp);
 
 	void update(float dt);
-	void draw(dbx::Renderer& r, const dbx::AtlasAsset& atlas, const dbx::BitmapAsset& laser) const;
+	void draw(dbx::Renderer& r, const dbx::AtlasAsset& atlas, const dbx::BitmapAsset& laser, const dbx::BitmapAsset& shoot_fx) const;
 
 	int hp() const { return m_hp; }
 	int x()  const { return m_x;  }
@@ -32,6 +32,7 @@ private:
     int m_speed = 150;
 
     int m_laser_cnt = 0;
+    int frames_since_shot = 5;
 
     dbx::Vec2i m_laser_pos;
 

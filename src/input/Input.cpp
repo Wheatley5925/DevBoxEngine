@@ -19,8 +19,8 @@ constexpr int8_t kButtonMap[kButtonCount] = {
     5, // B
     6, // X
     7, // Y
-    8, // Start
-    9  // Select
+    8, // Select
+    9  // Start
 };
 
 bool s_curr[kButtonCount] = {};

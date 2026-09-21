@@ -14,7 +14,7 @@ void requestReturnToOS();
 // True if a return was requested
 bool returnToOSRequested();
 
-// Perform the actual OTA partition switch + restart
-[[noreturn]] void returnToOS();
+// Perform the target-specific return behavior through DevBoxSDK.
+void returnToOS();
 
 }

@@ -1,10 +1,9 @@
 #include "Assets.h"
+#include <DevBoxSDK.h>
 #include <cstring>
-#include <Arduino.h>
-#include <FS.h>
-#include <SD_MMC.h>
-#include <stdlib.h>
+#include <cstdio>
 #include <new>
+#include <string>
 
 namespace dbx::Assets {
 namespace {
@@ -75,7 +74,10 @@ BitmapAsset loadBitmap(const char* path) {
     BitmapAsset out;
     if (!path || !path[0]) return out;
 
-    FILE* f = fopen(path, "rb");
+    const std::string resolvedPath = sdPath(path);
+    if (resolvedPath.empty()) return out;
+
+    FILE* f = fopen(resolvedPath.c_str(), "rb");
     if (!f) return out;
 
     struct SprHeader {
@@ -120,7 +122,10 @@ AtlasAsset loadAtlas(const char* path) {
     AtlasAsset out;
     if (!path || !path[0]) return out;
 
-    FILE* f = fopen(path, "rb");
+    const std::string resolvedPath = sdPath(path);
+    if (resolvedPath.empty()) return out;
+
+    FILE* f = fopen(resolvedPath.c_str(), "rb");
     if (!f) return out;
 
     struct AtlHeader {
@@ -219,7 +224,7 @@ AtlasAsset loadAtlas(const char* path) {
 
 void unload(BitmapAsset& asset) {
     if (asset.ownsMemory && asset.data) {
-        free(asset.data);
+        delete[] asset.data;
     }
 
     asset.data = nullptr;
@@ -233,6 +238,9 @@ void unload(AtlasAsset& atlas) {
 
     if (atlas.ownsFrames && atlas.frames) {
         delete[] atlas.frames;
+    }
+    if (atlas.ownsFrames && atlas.frameNames) {
+        delete[] atlas.frameNames;
     }
 
     atlas.frames = nullptr;

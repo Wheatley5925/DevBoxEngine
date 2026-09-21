@@ -16,5 +16,6 @@ private:
     dbx::BitmapAsset m_stars;
     dbx::BitmapAsset m_planet;
     dbx::BitmapAsset m_laser;
+    dbx::BitmapAsset m_shoot_fx;
     Player m_player;
 };
