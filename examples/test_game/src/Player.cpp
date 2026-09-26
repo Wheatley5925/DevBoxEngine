@@ -2,7 +2,7 @@
 
 using namespace dbx;
 
-static constexpr float IDLE_FRAME_TIME = 0.5f;
+static constexpr float PLAYER_IDLE_FRAME_TIME = 0.5f;
 static constexpr const char* LASER_SOUND_PATH =
     "/sdcard/apps/test_game/assets/main/laserShoot.wav";
 
@@ -59,8 +59,8 @@ void Player::update(float dt) {
 
     frames_since_shot++;
     m_animTimer += dt;
-    while (m_animTimer >= IDLE_FRAME_TIME) {
-        m_animTimer -= IDLE_FRAME_TIME;
+    while (m_animTimer >= PLAYER_IDLE_FRAME_TIME) {
+        m_animTimer -= PLAYER_IDLE_FRAME_TIME;
         m_animFrame ^= 1;
     }
 }
@@ -69,25 +69,26 @@ int Player::currentFrame() const {
     return (m_animFrame == 0) ? 0 : 1;
 }
 
-void Player::draw(Renderer& r, const AtlasAsset& atlasAsset, const BitmapAsset& laser, const BitmapAsset& shoot_fx) const {
+void Player::draw(Renderer& r, const AtlasAsset& atlasAsset, const BitmapAsset& laser, const AtlasAsset& shoot_fxAtlasAsset) const {
     if (!atlasAsset.valid()) return;
 
-    SpriteAtlas atlas = atlasAsset.view();
+    SpriteAtlas playerAtlas = atlasAsset.view();
     const int frameIndex = currentFrame();
 
-    if (frameIndex < 0 || frameIndex >= atlas.frameCount) return;
+    if (frameIndex < 0 || frameIndex >= playerAtlas.frameCount) return;
 
-    const SpriteFrame& fr = atlas.frames[frameIndex];
+    const SpriteFrame& fr = playerAtlas.frames[frameIndex];
     const int drawX = m_x - fr.originX;
     const int drawY = m_y - fr.originY;
-    
+
     if (m_laser_cnt > 0) {
     	r.drawBitmap(laser.view(), m_laser_pos.x, m_laser_pos.y, false, 0);
     }
 
-    if (frames_since_shot < 5) {
-        r.drawBitmap(shoot_fx.view(), drawX + 42, drawY + 7, false, 0);
-    }
+    r.drawSprite(playerAtlas, frameIndex, drawX, drawY, true, atlasAsset.transparentColor);
 
-    r.drawSprite(atlas, frameIndex, drawX, drawY, true, atlasAsset.transparentColor);
+    SpriteAtlas shoot_fxAtlas = shoot_fxAtlasAsset.view();
+    if (frames_since_shot < 6) {
+        r.drawSprite(shoot_fxAtlas, (frames_since_shot + 1) / 3, drawX + 41, drawY + 5, true, shoot_fxAtlasAsset.transparentColor);
+    }
 }

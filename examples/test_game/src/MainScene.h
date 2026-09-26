@@ -1,6 +1,7 @@
 #pragma once
 
 #include <DevBoxEngine.h>
+#include "Enemy.h"
 #include "Player.h"
 
 class MainScene : public dbx::Scene {
@@ -13,9 +14,11 @@ public:
 private:
     dbx::AtlasAsset m_playerAtlas;
     dbx::AtlasAsset m_hpAtlas;
+    dbx::AtlasAsset m_enemyAtlas;
     dbx::BitmapAsset m_stars;
     dbx::BitmapAsset m_planet;
     dbx::BitmapAsset m_laser;
-    dbx::BitmapAsset m_shoot_fx;
+    dbx::AtlasAsset m_shoot_fxAtlas;
     Player m_player;
+    Enemy m_enemy;
 };

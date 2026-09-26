@@ -1,6 +1,6 @@
 #include <DevBoxTarget.h>
 
-#if DEVBOX_TARGET == DEVBOX_TARGET_LINUX
+#if DEVBOX_TARGET_IS_DESKTOP
 
 #include <DevBoxEngine.h>
 #include <DevBoxSDK.h>
@@ -33,4 +33,4 @@ int main() {
     return 0;
 }
 
-#endif // DEVBOX_TARGET_LINUX
+#endif // DEVBOX_TARGET_IS_DESKTOP

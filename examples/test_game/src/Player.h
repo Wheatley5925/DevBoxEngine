@@ -8,7 +8,7 @@ public:
 	void setHP(int hp);
 
 	void update(float dt);
-	void draw(dbx::Renderer& r, const dbx::AtlasAsset& atlas, const dbx::BitmapAsset& laser, const dbx::BitmapAsset& shoot_fx) const;
+	void draw(dbx::Renderer& r, const dbx::AtlasAsset& atlas, const dbx::BitmapAsset& laser, const dbx::AtlasAsset& shoot_fxAtlasAsset) const;
 
 	int hp() const { return m_hp; }
 	int x()  const { return m_x;  }
