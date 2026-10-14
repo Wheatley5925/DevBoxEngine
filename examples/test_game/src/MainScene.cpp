@@ -60,6 +60,18 @@ void MainScene::update(float dt) {
     if (planet_x < -700)
 	    planet_x = 300;
 
+    const gameobject* lasers = m_player.lasers();
+    for (int i = 0; i < MAX_LASERS; i++) {
+        if (m_enemy.active() == false) break;
+        if (lasers[i].active == false) continue;
+        
+        if (lasers[i].m_x >= m_enemy.x() && lasers[i].m_x <= m_enemy.x() + m_enemy.w() &&
+            lasers[i].m_y >= m_enemy.y() && lasers[i].m_y <= m_enemy.y() + m_enemy.h()) {
+            m_enemy.setHP(m_enemy.getHP() - 1);
+            m_player.deactivateLaser(i);
+        }
+    }
+
     m_player.update(dt);
     m_enemy.update(dt);
 }

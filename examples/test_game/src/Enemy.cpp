@@ -4,9 +4,26 @@ using namespace dbx;
 
 static constexpr float IDLE_FRAME_TIME = 0.5f;
 
+void Enemy::setHP(int new_hp) { 
+    if (new_hp <= 0) { 
+        m_hp = 0; 
+        m_active = false; 
+    } else {
+        m_hp = new_hp; 
+    }
+}
+
 void Enemy::setPosition(int x, int y) {
     m_x = x;
     m_y = y;
+}
+
+bool Enemy::CheckCollision(int other_x, int other_y, 
+        const int other_w, const int other_h) {
+    return (other_x < m_x + m_w &&
+        other_x + other_w > m_x &&
+        other_y < m_y + m_h &&
+        other_y + other_h > m_y);
 }
 
 void Enemy::update(float dt) {
@@ -28,6 +45,7 @@ int Enemy::currentFrame() const {
 void Enemy::draw(Renderer& r, const AtlasAsset& atlasAsset) const {
     if (!atlasAsset.valid()) return;
 
+    if (m_active == false) return;
     SpriteAtlas enemyAtlas = atlasAsset.view();
     const int frameIndex = currentFrame();
 

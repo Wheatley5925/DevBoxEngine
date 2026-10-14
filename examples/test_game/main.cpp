@@ -28,6 +28,18 @@ int main() {
             dbx::System::requestReturnToOS();
         }
         wasReturnComboHeld = comboHeld;
+
+        static uint32_t lastSample = devboxMicros();
+        static unsigned frames = 0;
+
+        ++frames;
+        uint32_t now = devboxMicros();
+        uint32_t elapsed = now - lastSample;
+        if (elapsed >= 1000000) {
+            std::printf("FPS: %.1f\n", frames * 1000000.0 / elapsed);
+            frames = 0;
+            lastSample = now;
+        }
     }
 
     return 0;

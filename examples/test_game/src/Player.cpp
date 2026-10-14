@@ -2,6 +2,7 @@
 
 using namespace dbx;
 
+
 static constexpr float PLAYER_IDLE_FRAME_TIME = 0.5f;
 static constexpr const char* LASER_SOUND_PATH =
     "/sdcard/apps/test_game/assets/main/laserShoot.wav";
@@ -24,16 +25,31 @@ void Player::setHP(int hp) {
     m_hp = hp;
 }
 
+void Player::deactivateLaser(int index) {
+    if (index < 0 || index >= MAX_LASERS || !m_lasers[index].active) 
+        return;
+    m_lasers[index].active = false;
+    m_laser_cnt--;
+}
+
 void Player::tryShoot() {
-    if (m_laser_cnt > 0) return;
+    if (m_laser_cnt >= MAX_LASERS) return;
+    if (m_cooldownTimer < COOLDOWN_TIME) return;
 
     Audio::playSfx(LASER_SOUND_PATH);
 
     frames_since_shot = 0;
+    m_cooldownTimer = 0.0f;
 
     m_laser_cnt++;
-    m_laser_pos.x = m_x + 41;
-    m_laser_pos.y = m_y + 11;
+    
+    for (int i = 0; i < MAX_LASERS; i++)
+        if (m_lasers[i].active == false) {
+            m_lasers[i].m_x = m_x + 41;
+            m_lasers[i].m_y = m_y + 11;
+            m_lasers[i].active = true;
+            break;
+        }
 }
 
 void Player::update(float dt) {
@@ -47,9 +63,14 @@ void Player::update(float dt) {
 
     if (Input::pressed(Button::B)) tryShoot();
 
-    if (m_laser_cnt > 0) {
-	    m_laser_pos.x += 4;
-    	if (m_laser_pos.x > 256) m_laser_cnt = 0;
+    for (int i = 0; i < MAX_LASERS; i++) {
+        if (m_lasers[i].active == true) {
+            m_lasers[i].m_x += 4;
+            if (m_lasers[i].m_x > 256) {
+                m_laser_cnt--;
+                m_lasers[i].active = false;
+            }
+        }
     }
 
     m_x += static_cast<int>(dx * m_speed * dt);
@@ -58,6 +79,7 @@ void Player::update(float dt) {
     Player::clampPosition();
 
     frames_since_shot++;
+    m_cooldownTimer += dt;
     m_animTimer += dt;
     while (m_animTimer >= PLAYER_IDLE_FRAME_TIME) {
         m_animTimer -= PLAYER_IDLE_FRAME_TIME;
@@ -81,8 +103,9 @@ void Player::draw(Renderer& r, const AtlasAsset& atlasAsset, const BitmapAsset& 
     const int drawX = m_x - fr.originX;
     const int drawY = m_y - fr.originY;
 
-    if (m_laser_cnt > 0) {
-    	r.drawBitmap(laser.view(), m_laser_pos.x, m_laser_pos.y, false, 0);
+    for (int i = 0; i < MAX_LASERS; i++) {
+        if (m_lasers[i].active == false) continue;
+        r.drawBitmap(laser.view(), m_lasers[i].m_x, m_lasers[i].m_y, false, 0);
     }
 
     r.drawSprite(playerAtlas, frameIndex, drawX, drawY, true, atlasAsset.transparentColor);

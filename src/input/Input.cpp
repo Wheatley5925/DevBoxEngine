@@ -3,6 +3,10 @@
 #include <stdint.h>
 #include <DevBoxSDK.h>
 
+#if DEVBOX_TARGET == DEVBOX_TARGET_LINUX
+#include <cstdlib>
+#endif
+
 namespace dbx::Input {
 namespace {
 
@@ -30,14 +34,6 @@ inline int toIndex(Button b) {
     return static_cast<int>(b);
 }
 
-inline bool readRawButton(int logicalIndex) {
-    const int rawIndex = kButtonMap[logicalIndex];
-    if (rawIndex < 0) {
-        return false;
-    }
-    return !buttonRaw(rawIndex);
-}
-
 } // namespace
 
 void begin() {
@@ -48,9 +44,24 @@ void begin() {
 }
 
 void update() {
+#if DEVBOX_TARGET == DEVBOX_TARGET_LINUX
+    // Keep the previous polling path available for a controlled performance comparison.
+    static const bool legacyPolling = std::getenv("DEVBOX_INPUT_LEGACY") != nullptr;
+    if (legacyPolling) {
+        for (int i = 0; i < kButtonCount; ++i) {
+            s_prev[i] = s_curr[i];
+            const int rawIndex = kButtonMap[i];
+            s_curr[i] = rawIndex >= 0 && !buttonRaw(rawIndex);
+        }
+        return;
+    }
+#endif
+    bool released[kButtonCount] = {};
+    readButtonsRaw(released, kButtonCount);
     for (int i = 0; i < kButtonCount; ++i) {
         s_prev[i] = s_curr[i];
-        s_curr[i] = readRawButton(i);
+        const int rawIndex = kButtonMap[i];
+        s_curr[i] = rawIndex >= 0 && rawIndex < kButtonCount && !released[rawIndex];
     }
 }
 

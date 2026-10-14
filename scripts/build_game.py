@@ -124,6 +124,21 @@ def convert_assets(project_dir, assets_out):
     print("+++ ASSET CONVERSION FINISHED +++\n")
 
 
+def expose_compile_commands(database, project_dir):
+    engine_dir = Path(__file__).resolve().parent.parent
+    for directory in {engine_dir, project_dir}:
+        link = directory / "compile_commands.json"
+        if link.is_symlink():
+            if link.resolve() == database:
+                continue
+            print(f"Keeping existing compilation database link: {link}")
+            continue
+        if link.exists():
+            print(f"Keeping existing compilation database: {link}")
+            continue
+        link.symlink_to(os.path.relpath(database, directory))
+
+
 def build_esp32(project_dir, out_dir):
     firmware_out = project_dir / "esp_build"
     firmware_out.mkdir(parents=True, exist_ok=True)
@@ -158,9 +173,10 @@ def build_linux(project_dir, out_dir):
     print("\n+++ LINUX COMPILATION STARTED +++")
     subprocess.run(
         ["cmake", "-S", str(cmake_source_dir), "-B", str(cmake_build_dir),
-         "-DCMAKE_BUILD_TYPE=Debug"],
+         "-DCMAKE_BUILD_TYPE=Debug", "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"],
         check=True,
     )
+    expose_compile_commands(cmake_build_dir / "compile_commands.json", project_dir)
     subprocess.run(
         ["cmake", "--build", str(cmake_build_dir), "--parallel"],
         check=True,
